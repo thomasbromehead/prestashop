@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sanitize", ">= 4.6.6"
   spec.add_dependency "faraday", "1.0"
   spec.add_dependency "mini_magick", ">= 4.10.0"
-  spec.add_dependency "active_support/hash_with_indifferent_access"
+  spec.add_dependency "active_support"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake"
