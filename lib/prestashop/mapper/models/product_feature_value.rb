@@ -32,7 +32,9 @@ module Prestashop
       
       def find_or_create
         result = self.class.find_in_cache id_feature, value, id_lang
+        puts "Found the feature value #{value} that you were looking for" if result
         unless result
+          puts "Couldn't find feature value #{value}"
           result = create
           Client.clear_feature_values_cache
         end

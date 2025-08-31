@@ -6,14 +6,13 @@ module Prestashop
       model :category
 
       attr_accessor :id_lang
-      attr_accessor :id, :id_parent, :level_depth, :active, :id_shop_default, :is_root_category, :position
+      # attr_accessor :id, :id_parent, :level_depth, :active, :id_shop_default, :is_root_category, :position
+      attr_accessor :id, :id_parent, :active, :id_shop_default, :is_root_category, :position
       attr_writer   :name, :description, :link_rewrite
 
       def initialize args = {}
         @id               = args[:id]
         @id_parent        = args.fetch(:id_parent, 2)
-        @level_depth      = args[:level_depth]
-        # nb_products_recursive
         @active           = args.fetch(:active, 1)
         @id_shop_default  = args.fetch(:id_shop_default, 1)
         @is_root_category = 0

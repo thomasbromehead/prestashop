@@ -26,6 +26,8 @@ module Prestashop
       end
 
       refine Hash do 
+        require "active_support/hash_with_indifferent_access"
+        
         def clean!
           reject{|k,v| v.nil? or v.empty?}
         end

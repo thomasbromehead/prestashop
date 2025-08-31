@@ -41,7 +41,7 @@ module Prestashop
           builder.request     :url_encoded
           builder.request     :retry, 5
           builder.response    :logger if ENV['DEBUG']
-          builder.adapter     :net_http
+          builder.adapter     :typhoeus
           builder.basic_auth  api_key, ''
         end
       end
@@ -103,29 +103,31 @@ module Prestashop
       #   * price (product and combination resource only. see http://doc.prestashop.com/display/PS16/Chapter+10+-+Price+management) 
       #
       def get resource, id = nil, opts = {}
+      if id
         id.to_i unless id.kind_of?(Array)
-        raise ArgumentError, "resource: #{resource} must be string or symbol" unless resource.kind_of?(String) or resource.kind_of?(Symbol)
-        raise ArgumentError, "id: #{id} must be integer, array or nil" unless id.kind_of?(Integer) or id.kind_of?(Array) or id == nil
-
-        white_list = %w(filter display sort limit schema date price)
-        params = {}
-        opts.each do |name, value|
-          if white_list.include? name.to_s.split('[').first
-            params[name.to_sym] = value
-          end
-        end
-
-        request_path = path(resource, id)
-        response = connection.get request_path, params
-        if response.success?
-          response.body.parse
-        else
-          raise RequestFailed.new(response), response.body.parse_error
-        end
-      rescue ParserError
-        raise ParserError, "Response couldn't be parsed for: #{request_path} with #{params}. RESPONSE: #{response.body}"
       end
-      alias :read :get
+      raise ArgumentError, "resource: #{resource} must be string or symbol" unless resource.kind_of?(String) or resource.kind_of?(Symbol)
+      raise ArgumentError, "id: #{id} must be integer, array or nil" unless id.kind_of?(Integer) or id.kind_of?(Array) or id == nil
+      
+      white_list = %w(filter display sort limit schema date price)
+      params = {}
+      opts.each do |name, value|
+        if white_list.include? name.to_s.split('[').first
+          params[name.to_sym] = value
+        end
+      end
+      
+      request_path = path(resource, id)
+      response = connection.get request_path, params
+      if response.success?
+        response.body.parse
+      else
+        raise RequestFailed.new(response), response.body.parse_error
+      end
+    rescue ParserError
+      raise ParserError, "Response couldn't be parsed for: #{request_path} with #{params}. RESPONSE: #{response.body}"
+    end
+    alias :read :get
 
       # Call POST on WebService API, returns parsed Prestashop response if was request successfull or raise error, when request failed.
       # Can be called as +create+ insted of +put+
@@ -133,11 +135,14 @@ module Prestashop
       #   post :customer, { name: 'Steve' } # => true
       #
       def post resource, payload
+        puts "entering post"
         raise ArgumentError, "resource: #{resource} must be string or symbol" unless resource.kind_of?(String) or resource.kind_of?(Symbol)
-
         request_path = path(resource)
+        xml = Converter.build :products, :product, payload
+        puts "XML is #{payload}"
         response = connection.post request_path, payload
         if response.success?
+          puts "response was a sucess"
           response.body.parse
         else
           raise RequestFailed.new(response), "#{response.body.parse_error}. XML SENT: #{payload}"
@@ -156,8 +161,9 @@ module Prestashop
       def put resource, id, payload
         raise ArgumentError, "resource: #{resource} must be string or symbol" unless resource.kind_of?(String) or resource.kind_of?(Symbol)
         raise ArgumentError, "id: #{id} must be integer" unless id.to_i.kind_of?(Integer)
-
         request_path = path(resource, id)
+        xml =  Converter.build :products, :product, payload
+        # response = connection.put request_path, xml
         response = connection.put request_path, payload
         if response.success?
           response.body.parse

@@ -1,4 +1,9 @@
 using Prestashop::Mapper::Refinement
+class String
+  def parameterize
+
+  end
+end
 module Prestashop
   module Mapper
     class Product < Model
@@ -9,21 +14,21 @@ module Prestashop
                     :manufacturer_name, :quantity, :type, :id_shop_default, :supplier_reference, :location, :width, :height, :depth,
                     :weight, :quantity_discount, :ean13, :upc, :cache_is_pack, :cache_has_attachment, :is_virtual, :on_sale, :online_only, :ecotax, :minimal_quantity,
                     :price, :wholesale_price, :unity, :unit_price_ratio, :additional_shipping_cost, :customizable, :text_fields, :uploadable_files, :active,
-                    :redirect_type, :id_product_redirect, :available_for_order, :available_date, :condition, :show_price, :indexed, :visibility, :advanced_stock_management, :description
-      attr_accessor :id_lang, :id_categories, :id_features
-      attr_writer   :id, :name, :description_short, :link_rewrite, :reference, :price, :available_now, :available_later, :meta_description, :meta_keywords, :meta_title
+                    :redirect_type, :id_product_redirect, :available_for_order, :available_date, :condition, :show_price, :show_condition, :indexed, :visibility, :advanced_stock_management, :description
+      attr_accessor :id_lang, :id_categories, :id_features, :id_associated
+      attr_writer   :id, :name, :description_short, :link_rewrite, :reference, :price, :available_now, :available_later, :meta_description, :meta_keywords, :meta_title, :weight
 
-      def initialize args = {}
+      def initialize args
+        args = super(args)
         @id                         = args[:id]
         @id_manufacturer            = args[:id_manufacturer]
-        @id_supplier                = args.fetch(:id_supplier)
+        @id_supplier                = args[:id_supplier]
         @id_category_default        = args[:id_category_default]
         @new                        = args[:new]
         @cache_default_attribute    = args.fetch(:cache_default_attribute, 0)
         @id_tax_rules_group         = args[:id_tax_rules_group]
         @position_in_category       = args.fetch(:position_in_category, 0)
         @manufacturer_name          = args[:manufacturer_name]
-        @quantity                   = args[:quantity]
         @type                       = args.fetch(:type, 'simple')
         @id_shop_default            = args.fetch(:id_shop_default, 1)
         @reference                  = args.fetch(:reference)
@@ -57,6 +62,7 @@ module Prestashop
         @available_for_order        = args[:available_for_order]
         @available_date             = args.fetch(:available_date, Date.today.strftime("%F"))
         @condition                  = args.fetch(:condition, 'new')
+        @show_condition             = args.fetch(:condition, 1)
         @show_price                 = args[:show_price]
         @indexed                    = 0
         @visibility                 = args.fetch(:visibility, 'both')
@@ -72,14 +78,15 @@ module Prestashop
         @description_short          = args[:description_short]
         @available_now              = args[:available_now]
         @available_later            = args[:available_later]
-
         @id_lang                    = args.fetch(:id_lang)
         @id_categories              = args[:id_categories]
         @id_features                = args[:id_features]
+        @id_associated              = args[:id_associated]
       end
 
       def name
-        @name.plain.truncate(125)
+        check_is_string(@name) ? @name.plain.truncate(125) : "tbd"
+        # @name.plain.truncate(125)
       end
 
       def description_short
@@ -99,11 +106,15 @@ module Prestashop
       end
 
       def available_now
-        @available_now.plain.truncate(125)
+        check_is_string(@available_now) ? @available_now.plain.truncate(125) : "tbd"
       end
 
       def available_later
-        @available_later.plain.truncate(125)
+        check_is_string(@available_later) ? @available_later.plain.truncate(125) : "tbd"
+      end
+
+      def check_is_string(instance_variable)
+        instance_variable.is_a?(String)
       end
 
       def hash
@@ -124,9 +135,11 @@ module Prestashop
           reference:            reference,
           active:               active,
           redirect_type:        '404',
+          weight:               weight,
           available_for_order:  available_for_order,
           condition:            condition,
           show_price:           show_price,
+          show_condition:       show_condition,
           name:                 hash_lang(name, id_lang),
           description:          hash_lang(description, id_lang),
           description_short:    hash_lang(description_short, id_lang),
@@ -167,6 +180,14 @@ module Prestashop
       # Generate hash of features
       def features_hash
         id_features.map{|f| feature_hash(f[:id_feature], f[:id_feature_value])} if id_features
+      end
+
+      def accessories_hash
+        { id: id_associated, id_feature_value: id_feature_value } if id_feature and id_feature_value
+      end
+
+      def accessories
+        id_associated.map { |a| }
       end
 
       def id_categories_all

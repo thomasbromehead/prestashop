@@ -3,7 +3,7 @@ module Prestashop
     module Extension
       module ClassMethods
 
-        # Determinate if model with class resource exists with given id
+        # Determine if model with class resource exists with given id
         #
         #   Car.exists?(1) # => true # if given car exist
         #   Car.exists?(2) # => false # if given car don't exist
@@ -67,8 +67,17 @@ module Prestashop
         #   Car.update_hash(1, name: 'BMW7') # => {name: 'BMW7', manufacturer: 'BMW'}
         #
         def update_hash id, options = {}
-          original = defined?(fixed_hash(nil)) ? fixed_hash(id) : find(id)
-          original.merge(options)
+        original = defined?(fixed_hash(nil)) ? fixed_hash(id) : find(id)
+        if self.model == :category
+          # Remove level_depth and nb_products_recursive from the payload
+            original.delete(:level_depth)
+            original.delete(:nb_products_recursive)
+        end
+        if self.model == :manufacturer
+          # Remove level_depth and nb_products_recursive from the payload
+            original.delete(:link_rewrite)
+        end
+        original.merge(options)
         end
 
         # Create payload for update, converts hash to XML

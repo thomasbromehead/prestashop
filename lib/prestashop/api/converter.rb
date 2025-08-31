@@ -49,6 +49,7 @@ module Prestashop
       # * +source+ - Source, which will be converted into the XML
       #
       def self.build_nodes ml, source, mkey = nil
+        return if source.class == String
         unless source[:attr] and source[:val]
           source.each do |key, value| 
             if value.kind_of? Hash

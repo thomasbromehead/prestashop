@@ -5,6 +5,10 @@ module Prestashop
       include Extension
       extend Extension
 
+      def initialize args
+        return ActiveSupport::HashWithIndifferentAccess.new(args)
+      end
+
       # Meta title is same as name, when is not given
       def meta_title
         @meta_title ? @meta_title.plain.truncate(61) : name
